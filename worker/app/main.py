@@ -7,7 +7,7 @@ import time
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from .model import TinyTextModel
+from .model import load_model
 
 
 class PredictRequest(BaseModel):
@@ -16,7 +16,7 @@ class PredictRequest(BaseModel):
 
 
 app = FastAPI(title="ModelMesh Worker", version="0.1.0")
-model = TinyTextModel()
+model = load_model(os.getenv("MODEL_ARTIFACT"))
 worker_id = os.getenv("WORKER_ID", "worker-local")
 delay_ms = int(os.getenv("SIMULATE_DELAY_MS", "0"))
 fail_rate = float(os.getenv("FAIL_RATE", "0"))
