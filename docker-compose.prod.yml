@@ -1,0 +1,39 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+
+  worker-a:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    restart: unless-stopped
+    environment:
+      WORKER_ID: worker-a
+
+  worker-b:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    restart: unless-stopped
+    environment:
+      WORKER_ID: worker-b
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    restart: unless-stopped
+    environment:
+      WORKER_URLS: ${WORKER_URLS:-http://worker-a:9000,http://worker-b:9000}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      REQUEST_TIMEOUT_SECONDS: ${REQUEST_TIMEOUT_SECONDS:-1.5}
+      ROUTER_STRATEGY: ${ROUTER_STRATEGY:-load_aware}
+      CACHE_ENABLED: ${CACHE_ENABLED:-true}
+    ports:
+      - "${PORT:-8000}:8000"
+    depends_on:
+      - redis
+      - worker-a
+      - worker-b

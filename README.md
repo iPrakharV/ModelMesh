@@ -50,6 +50,16 @@ docker compose up --build
 
 That starts Redis, one gateway, and two workers.
 
+For a production-style local run:
+
+```bash
+cp .env.example .env
+docker compose -f docker-compose.prod.yml up --build
+python scripts/smoke_check.py
+```
+
+Deployment notes are in `docs/deployment.md`.
+
 ## Benchmarks
 
 The scenario runner starts local gateway and worker processes, sends load, then writes JSON and markdown results.
