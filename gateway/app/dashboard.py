@@ -114,6 +114,29 @@ DASHBOARD_HTML = """
     .bad {
       color: #fca5a5;
     }
+    input {
+      width: 76px;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      background: #020617;
+      color: #e2e8f0;
+      padding: 7px 8px;
+      font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    button {
+      border: 1px solid #38bdf8;
+      border-radius: 6px;
+      background: #082f49;
+      color: #bae6fd;
+      padding: 8px 10px;
+      font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+      cursor: pointer;
+    }
+    button.secondary {
+      border-color: #475569;
+      background: #111827;
+      color: #cbd5e1;
+    }
     @media (max-width: 760px) {
       header {
         display: block;
@@ -174,6 +197,9 @@ DASHBOARD_HTML = """
             <th class="num">Requests</th>
             <th class="num">Failures</th>
             <th class="num">Latency EMA</th>
+            <th class="num">Delay</th>
+            <th class="num">Fail rate</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="workers"></tbody>
@@ -194,6 +220,20 @@ DASHBOARD_HTML = """
     function pct(value) {
       return `${Math.round(value * 100)}%`;
     }
+
+    async function controlWorker(index, delayMs, failRate) {
+      await fetch(`/workers/${index}/control`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          delay_ms: Number(delayMs),
+          fail_rate: Number(failRate),
+        }),
+      });
+      await refresh();
+    }
+
+    window.controlWorker = controlWorker;
 
     async function refresh() {
       try {
@@ -216,6 +256,12 @@ DASHBOARD_HTML = """
             <td class="num">${worker.requests}</td>
             <td class="num ${worker.failures ? "bad" : ""}">${worker.failures}</td>
             <td class="num">${worker.latency_ema_ms} ms</td>
+            <td class="num"><input id="delay-${worker.index}" type="number" min="0" max="5000" value="${worker.delay_ms ?? 0}"></td>
+            <td class="num"><input id="fail-${worker.index}" type="number" min="0" max="1" step="0.05" value="${worker.fail_rate ?? 0}"></td>
+            <td>
+              <button onclick="controlWorker(${worker.index}, document.getElementById('delay-${worker.index}').value, document.getElementById('fail-${worker.index}').value)">Apply</button>
+              <button class="secondary" onclick="controlWorker(${worker.index}, 0, 0)">Reset</button>
+            </td>
           </tr>
         `).join("");
       } catch (error) {

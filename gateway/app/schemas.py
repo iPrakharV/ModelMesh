@@ -21,3 +21,8 @@ class GatewayPrediction(BaseModel):
     worker_url: str
     attempts: int
     latency_ms: float
+
+
+class WorkerControlRequest(BaseModel):
+    delay_ms: int | None = Field(default=None, ge=0, le=5000)
+    fail_rate: float | None = Field(default=None, ge=0, le=1)
