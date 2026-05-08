@@ -1,0 +1,212 @@
+{
+  "generated_by": "python bench/run_scenarios.py",
+  "results": [
+    {
+      "name": "cache_enabled",
+      "description": "One delayed worker, four repeated inputs, cache enabled.",
+      "router_strategy": "load_aware",
+      "cache_enabled": true,
+      "requests": 80,
+      "concurrency": 8,
+      "successes": 80,
+      "failures": 0,
+      "cache_hits": 71,
+      "cache_hit_rate": 0.8875,
+      "total_ms": 378.48,
+      "requests_per_second": 211.37,
+      "p50_latency_ms": 5.54,
+      "p95_latency_ms": 312.52,
+      "gateway_metrics": {
+        "requests": 80,
+        "cache_hits": 71,
+        "worker_errors": 0,
+        "cache_hit_rate": 0.8875,
+        "requests_per_second": 159.35,
+        "p50_latency_ms": 0.01,
+        "p95_latency_ms": 294.25
+      },
+      "workers": [
+        {
+          "url": "http://localhost:8311",
+          "in_flight": 0,
+          "requests": 9,
+          "failures": 0,
+          "latency_ema_ms": 268.22,
+          "last_error": null,
+          "strategy": "load_aware"
+        }
+      ]
+    },
+    {
+      "name": "cache_disabled",
+      "description": "Same traffic as cache_enabled, but cache disabled.",
+      "router_strategy": "load_aware",
+      "cache_enabled": false,
+      "requests": 80,
+      "concurrency": 8,
+      "successes": 80,
+      "failures": 0,
+      "cache_hits": 0,
+      "cache_hit_rate": 0.0,
+      "total_ms": 3210.55,
+      "requests_per_second": 24.92,
+      "p50_latency_ms": 318.85,
+      "p95_latency_ms": 326.38,
+      "gateway_metrics": {
+        "requests": 80,
+        "cache_hits": 0,
+        "worker_errors": 0,
+        "cache_hit_rate": 0.0,
+        "requests_per_second": 23.93,
+        "p50_latency_ms": 309.16,
+        "p95_latency_ms": 316.54
+      },
+      "workers": [
+        {
+          "url": "http://localhost:8311",
+          "in_flight": 0,
+          "requests": 80,
+          "failures": 0,
+          "latency_ema_ms": 294.34,
+          "last_error": null,
+          "strategy": "load_aware"
+        }
+      ]
+    },
+    {
+      "name": "slow_worker_round_robin",
+      "description": "One fast worker and one slow worker with round-robin routing.",
+      "router_strategy": "round_robin",
+      "cache_enabled": false,
+      "requests": 80,
+      "concurrency": 12,
+      "successes": 80,
+      "failures": 0,
+      "cache_hits": 0,
+      "cache_hit_rate": 0.0,
+      "total_ms": 3115.31,
+      "requests_per_second": 25.68,
+      "p50_latency_ms": 67.3,
+      "p95_latency_ms": 1033.24,
+      "gateway_metrics": {
+        "requests": 80,
+        "cache_hits": 0,
+        "worker_errors": 0,
+        "cache_hit_rate": 0.0,
+        "requests_per_second": 24.67,
+        "p50_latency_ms": 108.0,
+        "p95_latency_ms": 1029.4
+      },
+      "workers": [
+        {
+          "url": "http://localhost:8311",
+          "in_flight": 0,
+          "requests": 57,
+          "failures": 0,
+          "latency_ema_ms": 11.48,
+          "last_error": null,
+          "strategy": "round_robin"
+        },
+        {
+          "url": "http://localhost:8312",
+          "in_flight": 0,
+          "requests": 40,
+          "failures": 17,
+          "latency_ema_ms": 777.5,
+          "last_error": "ReadTimeout",
+          "strategy": "round_robin"
+        }
+      ]
+    },
+    {
+      "name": "slow_worker_load_aware",
+      "description": "Same workers as slow_worker_round_robin, using load-aware routing.",
+      "router_strategy": "load_aware",
+      "cache_enabled": false,
+      "requests": 80,
+      "concurrency": 12,
+      "successes": 80,
+      "failures": 0,
+      "cache_hits": 0,
+      "cache_hit_rate": 0.0,
+      "total_ms": 622.53,
+      "requests_per_second": 128.51,
+      "p50_latency_ms": 4.94,
+      "p95_latency_ms": 425.03,
+      "gateway_metrics": {
+        "requests": 80,
+        "cache_hits": 0,
+        "worker_errors": 0,
+        "cache_hit_rate": 0.0,
+        "requests_per_second": 109.34,
+        "p50_latency_ms": 3.61,
+        "p95_latency_ms": 408.65
+      },
+      "workers": [
+        {
+          "url": "http://localhost:8311",
+          "in_flight": 0,
+          "requests": 74,
+          "failures": 0,
+          "latency_ema_ms": 3.82,
+          "last_error": null,
+          "strategy": "load_aware"
+        },
+        {
+          "url": "http://localhost:8312",
+          "in_flight": 0,
+          "requests": 6,
+          "failures": 0,
+          "latency_ema_ms": 365.08,
+          "last_error": null,
+          "strategy": "load_aware"
+        }
+      ]
+    },
+    {
+      "name": "dead_worker_recovery",
+      "description": "One worker always fails, one worker stays healthy.",
+      "router_strategy": "load_aware",
+      "cache_enabled": false,
+      "requests": 60,
+      "concurrency": 10,
+      "successes": 60,
+      "failures": 0,
+      "cache_hits": 0,
+      "cache_hit_rate": 0.0,
+      "total_ms": 85.84,
+      "requests_per_second": 698.97,
+      "p50_latency_ms": 11.15,
+      "p95_latency_ms": 28.1,
+      "gateway_metrics": {
+        "requests": 60,
+        "cache_hits": 0,
+        "worker_errors": 0,
+        "cache_hit_rate": 0.0,
+        "requests_per_second": 275.53,
+        "p50_latency_ms": 8.53,
+        "p95_latency_ms": 19.94
+      },
+      "workers": [
+        {
+          "url": "http://localhost:8311",
+          "in_flight": 0,
+          "requests": 5,
+          "failures": 5,
+          "latency_ema_ms": 0.0,
+          "last_error": "HTTPStatusError",
+          "strategy": "load_aware"
+        },
+        {
+          "url": "http://localhost:8312",
+          "in_flight": 0,
+          "requests": 60,
+          "failures": 0,
+          "latency_ema_ms": 8.83,
+          "last_error": null,
+          "strategy": "load_aware"
+        }
+      ]
+    }
+  ]
+}
