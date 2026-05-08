@@ -13,7 +13,7 @@ from .cache import PredictionCache
 from .dashboard import DASHBOARD_HTML
 from .metrics import MetricsStore
 from .router import WorkerPool
-from .schemas import GatewayPrediction, PredictRequest
+from .schemas import GatewayPrediction, PredictRequest, WorkerControlRequest
 
 
 def env_flag(name: str, default: bool = True) -> bool:
@@ -58,7 +58,42 @@ async def dashboard() -> str:
 
 @app.get("/workers")
 async def workers() -> list[dict[str, str | int | float | None]]:
-    return router.snapshot()
+    client: httpx.AsyncClient = app.state.client
+    rows = router.snapshot()
+    for index, row in enumerate(rows):
+        row["index"] = index
+        try:
+            response = await client.get(f"{row['url']}/config", timeout=0.4)
+            response.raise_for_status()
+            config = response.json()
+            row["worker_id"] = config.get("worker_id")
+            row["model_version"] = config.get("model_version")
+            row["delay_ms"] = config.get("delay_ms")
+            row["fail_rate"] = config.get("fail_rate")
+            row["control_status"] = "ok"
+        except httpx.HTTPError:
+            row["control_status"] = "offline"
+    return rows
+
+
+@app.post("/workers/{worker_index}/control")
+async def control_worker(worker_index: int, update: WorkerControlRequest) -> dict[str, object]:
+    if worker_index < 0 or worker_index >= len(router.workers):
+        raise HTTPException(status_code=404, detail="worker not found")
+
+    worker = router.workers[worker_index]
+    client: httpx.AsyncClient = app.state.client
+    try:
+        response = await client.post(
+            f"{worker.url}/control",
+            json=update.model_dump(exclude_none=True),
+            timeout=request_timeout,
+        )
+        response.raise_for_status()
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"worker control failed: {exc.__class__.__name__}") from exc
+
+    return {"worker_index": worker_index, "worker_url": worker.url, "config": response.json()}
 
 
 @app.get("/metrics")

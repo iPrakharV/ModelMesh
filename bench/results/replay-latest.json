@@ -1,0 +1,191 @@
+{
+  "base_url": "http://localhost:8500",
+  "seconds_per_stage": 8.0,
+  "target_rps": 18.0,
+  "stages": [
+    {
+      "stage": "baseline",
+      "sent": 144,
+      "ok": 144,
+      "metrics": {
+        "requests": 144,
+        "cache_hits": 138,
+        "worker_errors": 0,
+        "cache_hit_rate": 0.9583,
+        "requests_per_second": 11.92,
+        "p50_latency_ms": 0.05,
+        "p95_latency_ms": 0.09
+      },
+      "workers": [
+        {
+          "url": "http://localhost:8511",
+          "in_flight": 0,
+          "requests": 4,
+          "failures": 0,
+          "latency_ema_ms": 1.71,
+          "last_error": null,
+          "strategy": "load_aware",
+          "index": 0,
+          "worker_id": "worker-fast",
+          "model_version": "tiny-text-mps-v1",
+          "delay_ms": 0,
+          "fail_rate": 0.0,
+          "control_status": "ok"
+        },
+        {
+          "url": "http://localhost:8512",
+          "in_flight": 0,
+          "requests": 2,
+          "failures": 0,
+          "latency_ema_ms": 1.31,
+          "last_error": null,
+          "strategy": "load_aware",
+          "index": 1,
+          "worker_id": "worker-control",
+          "model_version": "tiny-text-mps-v1",
+          "delay_ms": 0,
+          "fail_rate": 0.0,
+          "control_status": "ok"
+        }
+      ]
+    },
+    {
+      "stage": "slow-worker",
+      "sent": 144,
+      "ok": 144,
+      "metrics": {
+        "requests": 288,
+        "cache_hits": 138,
+        "worker_errors": 0,
+        "cache_hit_rate": 0.4792,
+        "requests_per_second": 14.32,
+        "p50_latency_ms": 1.32,
+        "p95_latency_ms": 5.11
+      },
+      "workers": [
+        {
+          "url": "http://localhost:8511",
+          "in_flight": 0,
+          "requests": 147,
+          "failures": 0,
+          "latency_ema_ms": 4.59,
+          "last_error": null,
+          "strategy": "load_aware",
+          "index": 0,
+          "worker_id": "worker-fast",
+          "model_version": "tiny-text-mps-v1",
+          "delay_ms": 0,
+          "fail_rate": 0.0,
+          "control_status": "ok"
+        },
+        {
+          "url": "http://localhost:8512",
+          "in_flight": 0,
+          "requests": 3,
+          "failures": 0,
+          "latency_ema_ms": 72.27,
+          "last_error": null,
+          "strategy": "load_aware",
+          "index": 1,
+          "worker_id": "worker-control",
+          "model_version": "tiny-text-mps-v1",
+          "delay_ms": 350,
+          "fail_rate": 0.0,
+          "control_status": "ok"
+        }
+      ]
+    },
+    {
+      "stage": "flaky-worker",
+      "sent": 144,
+      "ok": 144,
+      "metrics": {
+        "requests": 432,
+        "cache_hits": 138,
+        "worker_errors": 0,
+        "cache_hit_rate": 0.3194,
+        "requests_per_second": 15.35,
+        "p50_latency_ms": 3.96,
+        "p95_latency_ms": 5.34
+      },
+      "workers": [
+        {
+          "url": "http://localhost:8511",
+          "in_flight": 0,
+          "requests": 151,
+          "failures": 1,
+          "latency_ema_ms": 3.33,
+          "last_error": "HTTPStatusError",
+          "strategy": "load_aware",
+          "index": 0,
+          "worker_id": "worker-fast",
+          "model_version": "tiny-text-mps-v1",
+          "delay_ms": 0,
+          "fail_rate": 0.45,
+          "control_status": "ok"
+        },
+        {
+          "url": "http://localhost:8512",
+          "in_flight": 0,
+          "requests": 144,
+          "failures": 0,
+          "latency_ema_ms": 4.55,
+          "last_error": null,
+          "strategy": "load_aware",
+          "index": 1,
+          "worker_id": "worker-control",
+          "model_version": "tiny-text-mps-v1",
+          "delay_ms": 0,
+          "fail_rate": 0.0,
+          "control_status": "ok"
+        }
+      ]
+    },
+    {
+      "stage": "recovery",
+      "sent": 144,
+      "ok": 144,
+      "metrics": {
+        "requests": 576,
+        "cache_hits": 282,
+        "worker_errors": 0,
+        "cache_hit_rate": 0.4896,
+        "requests_per_second": 15.92,
+        "p50_latency_ms": 3.45,
+        "p95_latency_ms": 5.25
+      },
+      "workers": [
+        {
+          "url": "http://localhost:8511",
+          "in_flight": 0,
+          "requests": 151,
+          "failures": 1,
+          "latency_ema_ms": 3.33,
+          "last_error": "HTTPStatusError",
+          "strategy": "load_aware",
+          "index": 0,
+          "worker_id": "worker-fast",
+          "model_version": "tiny-text-mps-v1",
+          "delay_ms": 0,
+          "fail_rate": 0.0,
+          "control_status": "ok"
+        },
+        {
+          "url": "http://localhost:8512",
+          "in_flight": 0,
+          "requests": 144,
+          "failures": 0,
+          "latency_ema_ms": 4.55,
+          "last_error": null,
+          "strategy": "load_aware",
+          "index": 1,
+          "worker_id": "worker-control",
+          "model_version": "tiny-text-mps-v1",
+          "delay_ms": 0,
+          "fail_rate": 0.0,
+          "control_status": "ok"
+        }
+      ]
+    }
+  ]
+}

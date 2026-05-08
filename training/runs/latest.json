@@ -1,0 +1,16 @@
+{
+  "model_path": "worker/app/artifacts/tiny_text_model.json",
+  "device": "mps",
+  "epochs": 320,
+  "learning_rate": 0.05,
+  "samples_per_class": 2048,
+  "train_examples": 3276,
+  "test_examples": 820,
+  "vocab_size": 37,
+  "parameter_count": 38,
+  "train_seconds": 0.4351,
+  "examples_per_second": 2409512.37,
+  "final_loss": 0.002556,
+  "train_accuracy": 1.0,
+  "test_accuracy": 1.0
+}

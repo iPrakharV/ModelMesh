@@ -35,3 +35,14 @@ The benchmark runner uses both modes against the same slow-worker scenario so th
 `training/train_text_model.py` trains the tiny text model with PyTorch. On Apple Silicon it uses `mps`, and it exits instead of silently falling back to CPU unless `--allow-cpu` is passed.
 
 The trained artifact is plain JSON so the worker can load it without depending on PyTorch at inference time.
+
+The latest checked-in run trained on `mps` in under a second. The run file records device, epochs, examples/sec, train accuracy, and test accuracy so the performance claim is reproducible.
+
+## Live failure demo
+
+Workers expose a small local control endpoint for demo runs:
+
+- `GET /config` returns delay and failure settings.
+- `POST /control` updates artificial delay and failure rate.
+
+The gateway wraps those controls at `POST /workers/{index}/control`, and the dashboard exposes inputs for delay and fail rate. `bench/replay_traffic.py` uses the same endpoint to move the system through baseline, slow-worker, flaky-worker, and recovery stages.
