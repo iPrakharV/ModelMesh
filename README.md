@@ -36,6 +36,12 @@ Open the local dashboard:
 http://localhost:8000/dashboard
 ```
 
+Run live traffic against the dashboard:
+
+```bash
+python bench/replay_traffic.py --seconds-per-stage 8 --rps 18
+```
+
 ## Docker
 
 ```bash
@@ -56,17 +62,17 @@ Latest local run:
 
 | Scenario | RPS | p50 ms | p95 ms | Cache hits | Failures |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| cache enabled | 211.37 | 5.54 | 312.52 | 71 | 0 |
-| cache disabled | 24.92 | 318.85 | 326.38 | 0 | 0 |
-| slow worker, round-robin | 25.68 | 67.3 | 1033.24 | 0 | 0 |
-| slow worker, load-aware | 128.51 | 4.94 | 425.03 | 0 | 0 |
-| dead worker recovery | 698.97 | 11.15 | 28.1 | 0 | 0 |
+| cache enabled | 728.95 | 5.01 | 52.04 | 72 | 0 |
+| cache disabled | 185.7 | 41.1 | 53.09 | 0 | 0 |
+| slow worker, round-robin | 187.36 | 57.79 | 111.91 | 0 | 0 |
+| slow worker, load-aware | 688.48 | 5.21 | 111.9 | 0 | 0 |
+| dead worker recovery | 707.98 | 11.37 | 28.93 | 0 | 0 |
 
 Full output is in `bench/results/latest.md` and `bench/results/latest.json`.
 
 ## Training
 
-The worker can load a small trained text model artifact from `worker/app/artifacts/tiny_text_model.json`.
+The worker can load a small trained text model artifact from `worker/app/artifacts/tiny_text_model.json`. The current model trains on generated service-status examples, so the point is the local training and serving path, not benchmark-grade NLP accuracy.
 
 On Apple Silicon, the training script uses PyTorch MPS. It refuses to run on CPU by default so a slow accidental CPU run fails fast.
 
@@ -77,6 +83,21 @@ python training/train_text_model.py
 
 If it is using the Mac GPU, the output includes `'device': 'mps'`.
 
+Latest training run on an M3 Pro:
+
+| Metric | Value |
+| --- | ---: |
+| Device | mps |
+| Epochs | 320 |
+| Train examples | 3,276 |
+| Test examples | 820 |
+| Train time | 0.4351 s |
+| Examples/sec | 2,409,512.37 |
+| Train accuracy | 1.0 |
+| Test accuracy | 1.0 |
+
+The full run output is in `training/runs/latest.md` and `training/runs/latest.json`.
+
 ## What is in here now
 
 - FastAPI gateway with `/predict`, `/health`, `/workers`, and `/metrics`
@@ -85,6 +106,7 @@ If it is using the Mac GPU, the output includes `'device': 'mps'`.
 - Retry on failed worker calls and basic load-aware routing
 - Scenario benchmark runner with saved results
 - Local dashboard for gateway and worker state
+- Worker delay/failure controls for live demos
 - Unit tests for routing, caching, metrics, and the model
 
 This is still intentionally small. The useful part is the system behavior around the model, not the model itself.
