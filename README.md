@@ -38,10 +38,23 @@ docker compose up --build
 
 That starts Redis, one gateway, and two workers.
 
+## Training
+
+The worker can load a small trained text model artifact from `worker/app/artifacts/tiny_text_model.json`.
+
+On Apple Silicon, the training script uses PyTorch MPS. It refuses to run on CPU by default so a slow accidental CPU run fails fast.
+
+```bash
+pip install -r requirements-train.txt
+python training/train_text_model.py
+```
+
+If it is using the Mac GPU, the output includes `'device': 'mps'`.
+
 ## What is in here now
 
 - FastAPI gateway with `/predict`, `/health`, `/workers`, and `/metrics`
-- Worker service with a tiny deterministic text classifier
+- Worker service with a tiny text classifier and optional trained artifact
 - Redis-backed cache when Redis is available, with an in-memory fallback
 - Retry on failed worker calls
 - Simple benchmark script
