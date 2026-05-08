@@ -9,12 +9,13 @@ from redis.exceptions import RedisError
 
 
 class PredictionCache:
-    def __init__(self, redis_url: str | None, ttl_seconds: int = 300) -> None:
+    def __init__(self, redis_url: str | None, ttl_seconds: int = 300, enabled: bool = True) -> None:
         self.ttl_seconds = ttl_seconds
+        self.enabled = enabled
         self.memory: dict[str, dict[str, Any]] = {}
         self.redis: Redis | None = None
 
-        if redis_url:
+        if enabled and redis_url:
             try:
                 client = Redis.from_url(redis_url, decode_responses=True)
                 client.ping()
@@ -22,11 +23,13 @@ class PredictionCache:
             except RedisError:
                 self.redis = None
 
-    def key_for(self, payload: dict[str, Any]) -> str:
-        normalized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    def key_for(self, *, text: str) -> str:
+        normalized = json.dumps({"text": text}, sort_keys=True, separators=(",", ":"))
         return "prediction:" + hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
     def get(self, key: str) -> dict[str, Any] | None:
+        if not self.enabled:
+            return None
         if self.redis is not None:
             try:
                 value = self.redis.get(key)
@@ -36,6 +39,8 @@ class PredictionCache:
         return self.memory.get(key)
 
     def set(self, key: str, value: dict[str, Any]) -> None:
+        if not self.enabled:
+            return
         if self.redis is not None:
             try:
                 self.redis.setex(key, self.ttl_seconds, json.dumps(value))

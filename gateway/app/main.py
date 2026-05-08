@@ -7,11 +7,20 @@ from typing import AsyncIterator
 
 import httpx
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
 
 from .cache import PredictionCache
+from .dashboard import DASHBOARD_HTML
 from .metrics import MetricsStore
 from .router import WorkerPool
 from .schemas import GatewayPrediction, PredictRequest
+
+
+def env_flag(name: str, default: bool = True) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.lower() not in {"0", "false", "no", "off"}
 
 
 def parse_worker_urls(raw: str | None) -> list[str]:
@@ -28,15 +37,23 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="ModelMesh Gateway", version="0.1.0", lifespan=lifespan)
-router = WorkerPool(parse_worker_urls(os.getenv("WORKER_URLS")))
-cache = PredictionCache(os.getenv("REDIS_URL"))
+router = WorkerPool(
+    parse_worker_urls(os.getenv("WORKER_URLS")),
+    strategy=os.getenv("ROUTER_STRATEGY", "load_aware"),
+)
+cache = PredictionCache(os.getenv("REDIS_URL"), enabled=env_flag("CACHE_ENABLED", default=True))
 metrics = MetricsStore()
 request_timeout = float(os.getenv("REQUEST_TIMEOUT_SECONDS", "1.0"))
 
 
 @app.get("/health")
 async def health() -> dict[str, str | int]:
-    return {"status": "ok", "workers": len(router.workers)}
+    return {"status": "ok", "workers": len(router.workers), "router_strategy": router.strategy}
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard() -> str:
+    return DASHBOARD_HTML
 
 
 @app.get("/workers")
@@ -52,7 +69,7 @@ async def metrics_snapshot() -> dict[str, float | int]:
 @app.post("/predict", response_model=GatewayPrediction)
 async def predict(payload: PredictRequest) -> GatewayPrediction:
     started = time.perf_counter()
-    cache_key = cache.key_for(payload.model_dump())
+    cache_key = cache.key_for(text=payload.text)
     cached = cache.get(cache_key)
 
     if cached is not None:

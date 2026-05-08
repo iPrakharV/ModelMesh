@@ -20,6 +20,14 @@ def test_worker_pool_penalizes_failures() -> None:
 
     assert router.candidates(1)[0].url == "http://b"
     assert router.snapshot()[0]["failures"] == 1
+    assert router.snapshot()[0]["strategy"] == "load_aware"
+
+
+def test_worker_pool_can_run_round_robin() -> None:
+    router = WorkerPool(["http://a", "http://b"], strategy="round_robin")
+
+    assert [worker.url for worker in router.candidates(2)] == ["http://a", "http://b"]
+    assert [worker.url for worker in router.candidates(2)] == ["http://b", "http://a"]
 
 
 def test_worker_pool_requires_worker() -> None:
@@ -27,5 +35,14 @@ def test_worker_pool_requires_worker() -> None:
         WorkerPool([])
     except ValueError as exc:
         assert "worker URL" in str(exc)
+    else:
+        raise AssertionError("expected ValueError")
+
+
+def test_worker_pool_rejects_unknown_strategy() -> None:
+    try:
+        WorkerPool(["http://a"], strategy="random")
+    except ValueError as exc:
+        assert "strategy" in str(exc)
     else:
         raise AssertionError("expected ValueError")

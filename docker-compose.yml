@@ -31,6 +31,8 @@ services:
       WORKER_URLS: http://worker-a:9000,http://worker-b:9000
       REDIS_URL: redis://redis:6379/0
       REQUEST_TIMEOUT_SECONDS: "1.5"
+      ROUTER_STRATEGY: load_aware
+      CACHE_ENABLED: "true"
     ports:
       - "8000:8000"
     depends_on:

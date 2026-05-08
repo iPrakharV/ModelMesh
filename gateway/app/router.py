@@ -16,14 +16,20 @@ class Worker:
 
 
 class WorkerPool:
-    def __init__(self, worker_urls: list[str]) -> None:
+    def __init__(self, worker_urls: list[str], strategy: str = "load_aware") -> None:
         if not worker_urls:
             raise ValueError("at least one worker URL is required")
+        if strategy not in {"load_aware", "round_robin"}:
+            raise ValueError("strategy must be load_aware or round_robin")
 
         self.workers = [Worker(url=url.rstrip("/")) for url in worker_urls]
+        self.strategy = strategy
+        self._round_robin_index = 0
 
     def candidates(self, attempts: int) -> list[Worker]:
         count = min(max(attempts, 1), len(self.workers))
+        if self.strategy == "round_robin":
+            return self._round_robin_candidates(count)
         ranked = sorted(self.workers, key=self._score)
         return ranked[:count]
 
@@ -56,9 +62,17 @@ class WorkerPool:
                 "failures": worker.failures,
                 "latency_ema_ms": round(worker.latency_ema_ms, 2),
                 "last_error": worker.last_error,
+                "strategy": self.strategy,
             }
             for worker in self.workers
         ]
 
     def _score(self, worker: Worker) -> tuple[int, int, float, str]:
         return (worker.failures, worker.in_flight, worker.latency_ema_ms, worker.url)
+
+    def _round_robin_candidates(self, count: int) -> list[Worker]:
+        selected = []
+        for offset in range(count):
+            selected.append(self.workers[(self._round_robin_index + offset) % len(self.workers)])
+        self._round_robin_index = (self._round_robin_index + 1) % len(self.workers)
+        return selected
