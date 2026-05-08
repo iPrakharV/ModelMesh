@@ -2,7 +2,7 @@
 
 A small inference gateway for testing how ML services behave when traffic, caching, and worker failures get involved.
 
-The first version runs a FastAPI gateway in front of a few model workers. The gateway accepts prediction requests, checks a cache, routes to a worker, retries on failure, and keeps basic latency and error metrics.
+The first version runs a FastAPI gateway in front of a few model workers. The gateway accepts prediction requests, checks a cache, routes to a worker, retries on failure, and keeps basic latency and error metrics. Worker routing tracks recent latency, failures, and in-flight requests.
 
 ## Run it
 
@@ -43,7 +43,7 @@ That starts Redis, one gateway, and two workers.
 - FastAPI gateway with `/predict`, `/health`, `/workers`, and `/metrics`
 - Worker service with a tiny deterministic text classifier
 - Redis-backed cache when Redis is available, with an in-memory fallback
-- Retry on failed worker calls
+- Retry on failed worker calls and basic load-aware routing
 - Simple benchmark script
 - Unit tests for routing, caching, metrics, and the model
 
