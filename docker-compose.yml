@@ -1,0 +1,39 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  worker-a:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    environment:
+      WORKER_ID: worker-a
+    ports:
+      - "8011:9000"
+
+  worker-b:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    environment:
+      WORKER_ID: worker-b
+      SIMULATE_DELAY_MS: "25"
+    ports:
+      - "8012:9000"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    environment:
+      WORKER_URLS: http://worker-a:9000,http://worker-b:9000
+      REDIS_URL: redis://redis:6379/0
+      REQUEST_TIMEOUT_SECONDS: "1.5"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - worker-a
+      - worker-b
