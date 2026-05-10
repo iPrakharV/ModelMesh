@@ -24,3 +24,14 @@ jobs:
 
       - name: Run tests
         run: python -m pytest -q
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build gateway image
+        run: docker build -f gateway/Dockerfile -t modelmesh-gateway:test .
+
+      - name: Build worker image
+        run: docker build -f worker/Dockerfile -t modelmesh-worker:test .
