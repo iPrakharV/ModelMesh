@@ -1,0 +1,141 @@
+{
+  "model_version": "tiny-text-mps-v1",
+  "dataset": "handwritten service-status challenge set",
+  "examples": 16,
+  "accuracy": 0.9375,
+  "correct": 15,
+  "confusion_matrix": {
+    "healthy": {
+      "healthy": 6,
+      "risky": 1
+    },
+    "risky": {
+      "healthy": 0,
+      "risky": 9
+    }
+  },
+  "per_label": {
+    "healthy": {
+      "precision": 1.0,
+      "recall": 0.8571
+    },
+    "risky": {
+      "precision": 0.9,
+      "recall": 1.0
+    }
+  },
+  "rows": [
+    {
+      "text": "fast stable reliable service",
+      "expected": "healthy",
+      "predicted": "healthy",
+      "score": 0.9993,
+      "correct": true
+    },
+    {
+      "text": "slow broken timeout error",
+      "expected": "risky",
+      "predicted": "risky",
+      "score": 1.0,
+      "correct": true
+    },
+    {
+      "text": "worker recovered after timeout and is stable",
+      "expected": "healthy",
+      "predicted": "risky",
+      "score": 0.6689,
+      "correct": false
+    },
+    {
+      "text": "cache hit but worker failed with timeout",
+      "expected": "risky",
+      "predicted": "risky",
+      "score": 0.9887,
+      "correct": true
+    },
+    {
+      "text": "great latency but retry caused timeout",
+      "expected": "risky",
+      "predicted": "risky",
+      "score": 0.9572,
+      "correct": true
+    },
+    {
+      "text": "responsive route completed request",
+      "expected": "healthy",
+      "predicted": "healthy",
+      "score": 0.9998,
+      "correct": true
+    },
+    {
+      "text": "unhealthy worker returned fast response",
+      "expected": "risky",
+      "predicted": "risky",
+      "score": 0.9949,
+      "correct": true
+    },
+    {
+      "text": "stable gateway handled burst traffic",
+      "expected": "healthy",
+      "predicted": "healthy",
+      "score": 0.6106,
+      "correct": true
+    },
+    {
+      "text": "prediction failed after worker crash",
+      "expected": "risky",
+      "predicted": "risky",
+      "score": 0.994,
+      "correct": true
+    },
+    {
+      "text": "service is healthy but slow",
+      "expected": "risky",
+      "predicted": "risky",
+      "score": 0.6146,
+      "correct": true
+    },
+    {
+      "text": "reliable cache and responsive worker",
+      "expected": "healthy",
+      "predicted": "healthy",
+      "score": 0.9994,
+      "correct": true
+    },
+    {
+      "text": "broken route recovered with retry",
+      "expected": "risky",
+      "predicted": "risky",
+      "score": 0.9964,
+      "correct": true
+    },
+    {
+      "text": "cache recovered and request completed",
+      "expected": "healthy",
+      "predicted": "healthy",
+      "score": 0.993,
+      "correct": true
+    },
+    {
+      "text": "gateway retry loop after timeout",
+      "expected": "risky",
+      "predicted": "risky",
+      "score": 0.9937,
+      "correct": true
+    },
+    {
+      "text": "responsive worker handled traffic burst",
+      "expected": "healthy",
+      "predicted": "healthy",
+      "score": 0.9185,
+      "correct": true
+    },
+    {
+      "text": "mesh returned broken prediction error",
+      "expected": "risky",
+      "predicted": "risky",
+      "score": 0.9992,
+      "correct": true
+    }
+  ]
+}
