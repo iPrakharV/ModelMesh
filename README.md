@@ -60,6 +60,8 @@ python scripts/smoke_check.py
 
 Deployment notes are in `docs/deployment.md`.
 
+There is also a Render Blueprint in `render.yaml` for a hosted demo with one public gateway, two private workers, and a managed cache.
+
 ## Benchmarks
 
 The scenario runner starts local gateway and worker processes, sends load, then writes JSON and markdown results.
