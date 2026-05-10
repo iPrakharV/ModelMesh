@@ -23,9 +23,20 @@ def env_flag(name: str, default: bool = True) -> bool:
     return value.lower() not in {"0", "false", "no", "off"}
 
 
+def parse_worker_hostports(env: dict[str, str] | None = None) -> list[str]:
+    values = env or os.environ
+    urls = []
+    for key in sorted(values):
+        if key.startswith("WORKER_") and key.endswith("_HOSTPORT"):
+            hostport = values[key].strip()
+            if hostport:
+                urls.append(f"http://{hostport}")
+    return urls
+
+
 def parse_worker_urls(raw: str | None) -> list[str]:
     if not raw:
-        return ["http://localhost:8011"]
+        return parse_worker_hostports() or ["http://localhost:8011"]
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
