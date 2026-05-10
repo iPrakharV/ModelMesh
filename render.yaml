@@ -1,0 +1,55 @@
+services:
+  - type: keyvalue
+    name: modelmesh-cache
+    plan: free
+    ipAllowList: []
+
+  - type: pserv
+    runtime: docker
+    name: modelmesh-worker-a
+    plan: starter
+    dockerfilePath: ./worker/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: WORKER_ID
+        value: worker-a
+
+  - type: pserv
+    runtime: docker
+    name: modelmesh-worker-b
+    plan: starter
+    dockerfilePath: ./worker/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: WORKER_ID
+        value: worker-b
+
+  - type: web
+    runtime: docker
+    name: modelmesh-gateway
+    plan: starter
+    dockerfilePath: ./gateway/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: WORKER_A_HOSTPORT
+        fromService:
+          type: pserv
+          name: modelmesh-worker-a
+          property: hostport
+      - key: WORKER_B_HOSTPORT
+        fromService:
+          type: pserv
+          name: modelmesh-worker-b
+          property: hostport
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: modelmesh-cache
+          property: connectionString
+      - key: REQUEST_TIMEOUT_SECONDS
+        value: "1.5"
+      - key: ROUTER_STRATEGY
+        value: load_aware
+      - key: CACHE_ENABLED
+        value: "true"

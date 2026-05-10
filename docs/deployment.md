@@ -42,3 +42,15 @@ CACHE_ENABLED=true
 This is not a production ML platform yet. It is a compact inference mesh that demonstrates training, serving, caching, routing, live worker controls, failure recovery, and benchmark evidence.
 
 The next real hosting step is choosing a provider and wiring its private service networking. The Docker setup here is intentionally provider-neutral so the app can go to Fly.io, Render, Railway, a VM, or a Kubernetes cluster without changing the Python code.
+
+## Render Blueprint
+
+`render.yaml` defines a Render Blueprint for:
+
+- one public gateway web service
+- two private worker services
+- one Render Key Value cache
+
+The gateway reads `WORKER_A_HOSTPORT` and `WORKER_B_HOSTPORT`, which Render fills from each private worker service. That avoids hardcoding internal hostnames.
+
+Important: the private worker services use Render's `starter` plan in the Blueprint because private services do not run on the free plan. Review the cost in Render before applying the Blueprint.

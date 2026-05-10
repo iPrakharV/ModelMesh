@@ -1,4 +1,5 @@
 from gateway.app.cache import PredictionCache
+from gateway.app.main import parse_worker_hostports, parse_worker_urls
 
 
 def test_memory_cache_round_trip() -> None:
@@ -27,3 +28,17 @@ def test_disabled_cache_is_a_noop() -> None:
     cache.set(key, {"prediction": {"label": "healthy"}})
 
     assert cache.get(key) is None
+
+
+def test_worker_hostport_env_vars_are_render_friendly() -> None:
+    env = {
+        "WORKER_A_HOSTPORT": "worker-a:9000",
+        "WORKER_B_HOSTPORT": "worker-b:9000",
+        "OTHER_VALUE": "ignored",
+    }
+
+    assert parse_worker_hostports(env) == ["http://worker-a:9000", "http://worker-b:9000"]
+
+
+def test_worker_urls_still_accepts_explicit_list() -> None:
+    assert parse_worker_urls("http://a:9000,http://b:9000") == ["http://a:9000", "http://b:9000"]

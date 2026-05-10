@@ -9,4 +9,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY worker ./worker
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000/health', timeout=2).read()"
-CMD ["uvicorn", "worker.app.main:app", "--host", "0.0.0.0", "--port", "9000"]
+CMD ["sh", "-c", "uvicorn worker.app.main:app --host 0.0.0.0 --port ${PORT:-9000}"]
