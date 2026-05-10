@@ -82,6 +82,8 @@ Latest local run:
 
 Full output is in `bench/results/latest.md` and `bench/results/latest.json`.
 
+The full project report is in `docs/report.md`.
+
 ## Training
 
 The worker can load a small trained text model artifact from `worker/app/artifacts/tiny_text_model.json`. The current model trains on generated service-status examples, so the point is the local training and serving path, not benchmark-grade NLP accuracy.
@@ -109,6 +111,8 @@ Latest training run on an M3 Pro:
 | Test accuracy | 1.0 |
 
 The full run output is in `training/runs/latest.md` and `training/runs/latest.json`.
+
+Model evaluation and limitations are documented in `docs/model_card.md`.
 
 ## What is in here now
 
