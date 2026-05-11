@@ -16,7 +16,6 @@ from typing import Any
 
 import httpx
 
-
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DIR = ROOT / "bench" / "results"
 BASE_PORT = 8300

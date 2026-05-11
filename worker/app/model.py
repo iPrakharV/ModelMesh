@@ -6,7 +6,6 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-
 TOKEN_RE = re.compile(r"[a-z']+")
 DEFAULT_ARTIFACT = Path(__file__).resolve().parent / "artifacts" / "tiny_text_model.json"
 DEFAULT_WEIGHTS = {
@@ -29,7 +28,7 @@ class TinyTextModel:
     bias: float = 0.0
 
     @classmethod
-    def from_artifact(cls, path: Path) -> "TinyTextModel":
+    def from_artifact(cls, path: Path) -> TinyTextModel:
         artifact = json.loads(path.read_text())
         return cls(
             version=artifact.get("model_version", "tiny-text-trained"),

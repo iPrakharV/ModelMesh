@@ -23,7 +23,13 @@ class MetricsStore:
     worker_errors: int = 0
     latencies_ms: deque[float] = field(default_factory=lambda: deque(maxlen=500))
 
-    def record_request(self, latency_ms: float, *, cached: bool, worker_error: bool = False) -> None:
+    def record_request(
+        self,
+        latency_ms: float,
+        *,
+        cached: bool,
+        worker_error: bool = False,
+    ) -> None:
         self.requests += 1
         self.latencies_ms.append(latency_ms)
         if cached:
