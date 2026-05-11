@@ -3,32 +3,43 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 OUTPUT_JSON = ROOT / "training" / "evaluation" / "latest.json"
 OUTPUT_MD = ROOT / "training" / "evaluation" / "latest.md"
+LABELS = ("healthy", "risky")
+
+
+@dataclass(frozen=True)
+class ChallengeExample:
+    expected: str
+    text: str
+
 
 CHALLENGE_SET = [
-    ("healthy", "fast stable reliable service"),
-    ("risky", "slow broken timeout error"),
-    ("healthy", "worker recovered after timeout and is stable"),
-    ("risky", "cache hit but worker failed with timeout"),
-    ("risky", "great latency but retry caused timeout"),
-    ("healthy", "responsive route completed request"),
-    ("risky", "unhealthy worker returned fast response"),
-    ("healthy", "stable gateway handled burst traffic"),
-    ("risky", "prediction failed after worker crash"),
-    ("risky", "service is healthy but slow"),
-    ("healthy", "reliable cache and responsive worker"),
-    ("risky", "broken route recovered with retry"),
-    ("healthy", "cache recovered and request completed"),
-    ("risky", "gateway retry loop after timeout"),
-    ("healthy", "responsive worker handled traffic burst"),
-    ("risky", "mesh returned broken prediction error"),
+    ChallengeExample("healthy", "fast stable reliable service"),
+    ChallengeExample("risky", "slow broken timeout error"),
+    ChallengeExample("healthy", "worker recovered after timeout and is stable"),
+    ChallengeExample("risky", "cache hit but worker failed with timeout"),
+    ChallengeExample("risky", "great latency but retry caused timeout"),
+    ChallengeExample("healthy", "responsive route completed request"),
+    ChallengeExample("risky", "unhealthy worker returned fast response"),
+    ChallengeExample("healthy", "stable gateway handled burst traffic"),
+    ChallengeExample("risky", "prediction failed after worker crash"),
+    ChallengeExample("risky", "service is healthy but slow"),
+    ChallengeExample("healthy", "reliable cache and responsive worker"),
+    ChallengeExample("risky", "broken route recovered with retry"),
+    ChallengeExample("healthy", "cache recovered and request completed"),
+    ChallengeExample("risky", "gateway retry loop after timeout"),
+    ChallengeExample("healthy", "responsive worker handled traffic burst"),
+    ChallengeExample("risky", "mesh returned broken prediction error"),
 ]
 
 
@@ -40,48 +51,60 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def evaluate(model_artifact: Path | None = None) -> dict:
-    from worker.app.model import load_model
+def empty_confusion_matrix() -> dict[str, dict[str, int]]:
+    return {expected: {predicted: 0 for predicted in LABELS} for expected in LABELS}
 
-    model = load_model(str(model_artifact) if model_artifact else None)
-    rows = []
-    labels = ["healthy", "risky"]
-    confusion = {
-        "healthy": {"healthy": 0, "risky": 0},
-        "risky": {"healthy": 0, "risky": 0},
+
+def score_example(model: Any, example: ChallengeExample) -> dict[str, Any]:
+    prediction = model.predict(example.text)
+    predicted = str(prediction["label"])
+    return {
+        "text": example.text,
+        "expected": example.expected,
+        "predicted": predicted,
+        "score": prediction["score"],
+        "correct": example.expected == predicted,
     }
 
-    for expected, text in CHALLENGE_SET:
-        prediction = model.predict(text)
-        predicted = str(prediction["label"])
-        confusion[expected][predicted] += 1
-        rows.append({
-            "text": text,
-            "expected": expected,
-            "predicted": predicted,
-            "score": prediction["score"],
-            "correct": expected == predicted,
-        })
 
-    total = len(rows)
-    correct = sum(1 for row in rows if row["correct"])
-    per_label = {}
-    for label in labels:
+def build_confusion_matrix(rows: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
+    confusion = empty_confusion_matrix()
+    for row in rows:
+        confusion[row["expected"]][row["predicted"]] += 1
+    return confusion
+
+
+def safe_rate(numerator: int, denominator: int) -> float:
+    return round(numerator / denominator, 4) if denominator else 0
+
+
+def label_metrics(confusion: dict[str, dict[str, int]]) -> dict[str, dict[str, float]]:
+    per_label: dict[str, dict[str, float]] = {}
+    for label in LABELS:
         true_positive = confusion[label][label]
         false_positive = sum(
-            confusion[other][label] for other in labels if other != label
+            confusion[other][label] for other in LABELS if other != label
         )
         false_negative = sum(
-            confusion[label][other] for other in labels if other != label
+            confusion[label][other] for other in LABELS if other != label
         )
         precision_base = true_positive + false_positive
         recall_base = true_positive + false_negative
-        precision = true_positive / precision_base if precision_base else 0
-        recall = true_positive / recall_base if recall_base else 0
         per_label[label] = {
-            "precision": round(precision, 4),
-            "recall": round(recall, 4),
+            "precision": safe_rate(true_positive, precision_base),
+            "recall": safe_rate(true_positive, recall_base),
         }
+    return per_label
+
+
+def evaluate(model_artifact: Path | None = None) -> dict[str, Any]:
+    from worker.app.model import load_model
+
+    model = load_model(str(model_artifact) if model_artifact else None)
+    rows = [score_example(model, example) for example in CHALLENGE_SET]
+    confusion = build_confusion_matrix(rows)
+    total = len(rows)
+    correct = sum(1 for row in rows if row["correct"])
 
     return {
         "model_version": model.version,
@@ -90,15 +113,12 @@ def evaluate(model_artifact: Path | None = None) -> dict:
         "accuracy": round(correct / total, 4),
         "correct": correct,
         "confusion_matrix": confusion,
-        "per_label": per_label,
+        "per_label": label_metrics(confusion),
         "rows": rows,
     }
 
 
-def write_outputs(result: dict, json_path: Path, md_path: Path) -> None:
-    json_path.parent.mkdir(parents=True, exist_ok=True)
-    json_path.write_text(json.dumps(result, indent=2) + "\n")
-
+def render_markdown(result: dict[str, Any]) -> str:
     lines = [
         "# Model evaluation",
         "",
@@ -149,7 +169,13 @@ def write_outputs(result: dict, json_path: Path, md_path: Path) -> None:
             )
 
     lines.append("")
-    md_path.write_text("\n".join(lines))
+    return "\n".join(lines)
+
+
+def write_outputs(result: dict[str, Any], json_path: Path, md_path: Path) -> None:
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(result, indent=2) + "\n")
+    md_path.write_text(render_markdown(result))
 
 
 def main() -> None:
