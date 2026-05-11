@@ -113,6 +113,9 @@ DASHBOARD_HTML = """
     .bad {
       color: #fca5a5;
     }
+    .muted {
+      color: #64748b;
+    }
     input {
       width: 76px;
       border: 1px solid #334155;
@@ -215,6 +218,7 @@ DASHBOARD_HTML = """
       errors: document.getElementById("errors"),
       workers: document.getElementById("workers"),
     };
+    const controlsEnabled = __CONTROLS_ENABLED__;
 
     function pct(value) {
       return `${Math.round(value * 100)}%`;
@@ -234,6 +238,16 @@ DASHBOARD_HTML = """
 
     window.controlWorker = controlWorker;
 
+    function controlCell(worker) {
+      if (!controlsEnabled) {
+        return `<span class="muted">disabled</span>`;
+      }
+      return `
+        <button onclick="controlWorker(${worker.index}, document.getElementById('delay-${worker.index}').value, document.getElementById('fail-${worker.index}').value)">Apply</button>
+        <button class="secondary" onclick="controlWorker(${worker.index}, 0, 0)">Reset</button>
+      `;
+    }
+
     async function refresh() {
       try {
         const [health, metrics, workers] = await Promise.all([
@@ -247,6 +261,7 @@ DASHBOARD_HTML = """
         ids.cache.textContent = pct(metrics.cache_hit_rate);
         ids.p95.textContent = `${metrics.p95_latency_ms} ms`;
         ids.errors.textContent = metrics.worker_errors;
+        const inputState = controlsEnabled ? "" : "disabled";
         ids.workers.innerHTML = workers.map((worker) => `
           <tr>
             <td>${worker.url}</td>
@@ -255,12 +270,9 @@ DASHBOARD_HTML = """
             <td class="num">${worker.requests}</td>
             <td class="num ${worker.failures ? "bad" : ""}">${worker.failures}</td>
             <td class="num">${worker.latency_ema_ms} ms</td>
-            <td class="num"><input id="delay-${worker.index}" type="number" min="0" max="5000" value="${worker.delay_ms ?? 0}"></td>
-            <td class="num"><input id="fail-${worker.index}" type="number" min="0" max="1" step="0.05" value="${worker.fail_rate ?? 0}"></td>
-            <td>
-              <button onclick="controlWorker(${worker.index}, document.getElementById('delay-${worker.index}').value, document.getElementById('fail-${worker.index}').value)">Apply</button>
-              <button class="secondary" onclick="controlWorker(${worker.index}, 0, 0)">Reset</button>
-            </td>
+            <td class="num"><input ${inputState} id="delay-${worker.index}" type="number" min="0" max="5000" value="${worker.delay_ms ?? 0}"></td>
+            <td class="num"><input ${inputState} id="fail-${worker.index}" type="number" min="0" max="1" step="0.05" value="${worker.fail_rate ?? 0}"></td>
+            <td>${controlCell(worker)}</td>
           </tr>
         `).join("");
       } catch (error) {

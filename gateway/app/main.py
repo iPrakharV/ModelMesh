@@ -128,7 +128,10 @@ async def health() -> dict[str, str | int]:
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard() -> str:
-    return DASHBOARD_HTML
+    return DASHBOARD_HTML.replace(
+        "__CONTROLS_ENABLED__",
+        str(settings.controls_enabled).lower(),
+    )
 
 
 @app.get("/workers")
@@ -145,6 +148,9 @@ async def control_worker(
     worker_index: int,
     update: WorkerControlRequest,
 ) -> dict[str, object]:
+    if not settings.controls_enabled:
+        raise HTTPException(status_code=403, detail="worker controls are disabled")
+
     worker = worker_for_index(worker_index)
     config = await control_remote_worker(worker, update)
     return {"worker_index": worker_index, "worker_url": worker.url, "config": config}
