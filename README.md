@@ -93,7 +93,7 @@ The full project report is in `docs/report.md`.
 
 ## Training
 
-The worker can load a small trained text model artifact from `worker/app/artifacts/tiny_text_model.json`. The current model trains on generated service-status examples, so the point is the local training and serving path, not benchmark-grade NLP accuracy.
+The worker can load a small trained text model artifact from `worker/app/artifacts/tiny_text_model.json`. The current model is a compact MLP over word and character n-gram features. It trains on generated service-status examples, so the point is the local training, export, evaluation, and serving path, not benchmark-grade NLP accuracy.
 
 On Apple Silicon, the training script uses PyTorch MPS. It refuses to run on CPU by default so a slow accidental CPU run fails fast.
 
@@ -108,12 +108,16 @@ Latest training run on an M3 Pro:
 
 | Metric | Value |
 | --- | ---: |
+| Model type | mlp_text_classifier |
 | Device | mps |
-| Epochs | 320 |
+| Epochs | 260 |
 | Train examples | 3,276 |
 | Test examples | 820 |
-| Train time | 0.4351 s |
-| Examples/sec | 2,409,512.37 |
+| Features | 140 |
+| Hidden units | 16 |
+| Parameters | 2,273 |
+| Train time | 0.3991 s |
+| Examples/sec | 2,134,408.08 |
 | Train accuracy | 1.0 |
 | Test accuracy | 1.0 |
 
@@ -124,7 +128,7 @@ Model evaluation and limitations are documented in `docs/model_card.md`.
 ## What is in here now
 
 - FastAPI gateway with `/predict`, `/health`, `/workers`, and `/metrics`
-- Worker service with a tiny text classifier and optional trained artifact
+- Worker service with a compact text classifier and optional trained artifact
 - Redis-backed cache when Redis is available, with an in-memory fallback
 - Retry on failed worker calls and basic load-aware routing
 - Scenario benchmark runner with saved results

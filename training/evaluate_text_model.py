@@ -107,6 +107,7 @@ def evaluate(model_artifact: Path | None = None) -> dict[str, Any]:
 
     return {
         "model_version": model.version,
+        "model_type": getattr(model, "model_type", "unknown"),
         "dataset": "handwritten service-status challenge set",
         "examples": total,
         "accuracy": round(correct / total, 4),
@@ -122,6 +123,7 @@ def render_markdown(result: dict[str, Any]) -> str:
         "# Model evaluation",
         "",
         f"Model version: `{result['model_version']}`",
+        f"Model type: `{result['model_type']}`",
         "",
         "| Metric | Value |",
         "| --- | ---: |",
