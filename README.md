@@ -69,6 +69,20 @@ keeps workers private and disables public worker failure controls.
 
 Deployment and validation steps are in `docs/hosted-demo.md`.
 
+## Repository layout
+
+```text
+gateway/          FastAPI gateway, routing, cache, metrics, dashboard
+worker/           model worker service and exported model artifact
+training/         MPS training and evaluation scripts
+bench/            benchmark and replay scripts with saved results
+scripts/          smoke checks and small operational helpers
+tests/            unit tests for gateway, worker, model, and settings
+docs/             architecture, deployment, report, and model card
+deploy/compose/   local Docker Compose files
+requirements/     runtime, development, and training dependency sets
+```
+
 ## Benchmarks
 
 The scenario runner starts local gateway and worker processes, sends load, then writes JSON and markdown results.
