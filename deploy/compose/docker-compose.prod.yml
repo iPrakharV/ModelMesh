@@ -6,7 +6,7 @@ services:
 
   worker-a:
     build:
-      context: .
+      context: ../..
       dockerfile: worker/Dockerfile
     restart: unless-stopped
     environment:
@@ -14,7 +14,7 @@ services:
 
   worker-b:
     build:
-      context: .
+      context: ../..
       dockerfile: worker/Dockerfile
     restart: unless-stopped
     environment:
@@ -22,7 +22,7 @@ services:
 
   gateway:
     build:
-      context: .
+      context: ../..
       dockerfile: gateway/Dockerfile
     restart: unless-stopped
     environment:
