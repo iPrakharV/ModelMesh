@@ -10,6 +10,7 @@ def test_gateway_settings_reads_explicit_worker_urls() -> None:
         "CACHE_ENABLED": "false",
         "REQUEST_TIMEOUT_SECONDS": "2.5",
         "REDIS_URL": "redis://cache:6379/0",
+        "GATEWAY_CONTROLS_ENABLED": "false",
     })
 
     assert settings.worker_urls == ["http://a:9000", "http://b:9000"]
@@ -17,6 +18,7 @@ def test_gateway_settings_reads_explicit_worker_urls() -> None:
     assert settings.cache_enabled is False
     assert settings.request_timeout_seconds == 2.5
     assert settings.redis_url == "redis://cache:6379/0"
+    assert settings.controls_enabled is False
 
 
 def test_gateway_settings_reads_render_hostports() -> None:

@@ -53,3 +53,5 @@ services:
         value: load_aware
       - key: CACHE_ENABLED
         value: "true"
+      - key: GATEWAY_CONTROLS_ENABLED
+        value: "false"

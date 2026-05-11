@@ -18,6 +18,11 @@ def get_json(url: str, timeout: float = 2.0) -> dict:
         return json.loads(response.read().decode("utf-8"))
 
 
+def get_text(url: str, timeout: float = 2.0) -> str:
+    with request.urlopen(url, timeout=timeout) as response:
+        return response.read().decode("utf-8")
+
+
 def post_json(url: str, payload: dict, timeout: float = 2.0) -> dict:
     data = json.dumps(payload).encode("utf-8")
     req = request.Request(
@@ -54,11 +59,16 @@ def main() -> None:
     )
     metrics = get_json(f"{base_url}/metrics")
     workers = get_json(f"{base_url}/workers")
+    dashboard = get_text(f"{base_url}/dashboard")
 
     if prediction["prediction"]["label"] != "healthy":
         raise RuntimeError(f"unexpected prediction: {prediction}")
+    if "requests" not in metrics or "p95_latency_ms" not in metrics:
+        raise RuntimeError(f"unexpected metrics payload: {metrics}")
     if not workers:
         raise RuntimeError("gateway returned no workers")
+    if "ModelMesh" not in dashboard or "Gateway metrics" not in dashboard:
+        raise RuntimeError("dashboard did not return the expected HTML")
 
     print(
         json.dumps(
@@ -66,7 +76,8 @@ def main() -> None:
                 "health": health,
                 "prediction": prediction,
                 "metrics": metrics,
-                "workers": workers,
+                "worker_count": len(workers),
+                "dashboard": "ok",
             },
             indent=2,
         )

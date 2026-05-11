@@ -62,6 +62,13 @@ Deployment notes are in `docs/deployment.md`.
 
 There is also a Render Blueprint in `render.yaml` for a hosted demo with one public gateway, two private workers, and a managed cache.
 
+## Hosted demo
+
+The hosted demo is Render-ready but does not have a checked-in public URL yet. The Blueprint
+keeps workers private and disables public worker failure controls.
+
+Deployment and validation steps are in `docs/hosted-demo.md`.
+
 ## Benchmarks
 
 The scenario runner starts local gateway and worker processes, sends load, then writes JSON and markdown results.

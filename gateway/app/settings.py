@@ -60,6 +60,7 @@ class GatewaySettings:
     redis_url: str | None = None
     cache_enabled: bool = True
     request_timeout_seconds: float = 1.0
+    controls_enabled: bool = True
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> GatewaySettings:
@@ -77,4 +78,5 @@ class GatewaySettings:
                 values.get("REQUEST_TIMEOUT_SECONDS"),
                 default=1.0,
             ),
+            controls_enabled=parse_bool(values.get("GATEWAY_CONTROLS_ENABLED"), default=True),
         )
