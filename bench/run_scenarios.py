@@ -122,15 +122,65 @@ def service_env(extra: dict[str, str]) -> dict[str, str]:
     return env
 
 
-def start_process(args: list[str], env: dict[str, str], log_path: Path) -> subprocess.Popen:
-    log_file = log_path.open("w")
-    return subprocess.Popen(
-        args,
-        cwd=ROOT,
-        env=env,
-        stdout=log_file,
-        stderr=subprocess.STDOUT,
-        text=True,
+def service_url(port: int) -> str:
+    return f"http://localhost:{port}"
+
+
+def uvicorn_args(module: str, port: int) -> list[str]:
+    return [
+        sys.executable,
+        "-m",
+        "uvicorn",
+        module,
+        "--host",
+        "127.0.0.1",
+        "--port",
+        str(port),
+    ]
+
+
+def start_process(
+    args: list[str],
+    env: dict[str, str],
+    log_path: Path,
+) -> subprocess.Popen:
+    with log_path.open("w") as log_file:
+        return subprocess.Popen(
+            args,
+            cwd=ROOT,
+            env=env,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+
+
+def start_worker(worker: WorkerConfig, scenario: Scenario, log_dir: Path) -> subprocess.Popen:
+    return start_process(
+        uvicorn_args("worker.app.main:app", worker.port),
+        service_env({
+            "WORKER_ID": worker.name,
+            "SIMULATE_DELAY_MS": str(worker.delay_ms),
+            "FAIL_RATE": str(worker.fail_rate),
+        }),
+        log_dir / f"{scenario.name}-{worker.name}.log",
+    )
+
+
+def start_gateway(
+    scenario: Scenario,
+    worker_urls: list[str],
+    log_dir: Path,
+) -> subprocess.Popen:
+    return start_process(
+        uvicorn_args("gateway.app.main:app", BASE_PORT),
+        service_env({
+            "WORKER_URLS": ",".join(worker_urls),
+            "ROUTER_STRATEGY": scenario.router_strategy,
+            "CACHE_ENABLED": str(scenario.cache_enabled).lower(),
+            "REQUEST_TIMEOUT_SECONDS": "1.0",
+        }),
+        log_dir / f"{scenario.name}-gateway.log",
     )
 
 
@@ -143,7 +193,8 @@ async def wait_for_health(url: str, timeout_seconds: float = 8.0) -> None:
                 if response.status_code == 200:
                     return
             except httpx.HTTPError:
-                await asyncio.sleep(0.1)
+                pass
+            await asyncio.sleep(0.1)
     raise RuntimeError(f"service did not become healthy: {url}")
 
 
@@ -158,7 +209,12 @@ def stop_processes(processes: list[subprocess.Popen]) -> None:
             process.kill()
 
 
-async def call(client: httpx.AsyncClient, url: str, index: int, unique_inputs: bool) -> dict[str, Any]:
+async def send_prediction(
+    client: httpx.AsyncClient,
+    url: str,
+    index: int,
+    unique_inputs: bool,
+) -> dict[str, Any]:
     text = SAMPLES[index % len(SAMPLES)]
     if unique_inputs:
         text = f"{text} sample {index}"
@@ -177,24 +233,24 @@ async def call(client: httpx.AsyncClient, url: str, index: int, unique_inputs: b
     }
 
 
-async def run_load(url: str, scenario: Scenario) -> dict[str, Any]:
-    semaphore = asyncio.Semaphore(scenario.concurrency)
-    async with httpx.AsyncClient(timeout=5.0) as client:
-        async def limited(index: int) -> dict[str, Any]:
-            async with semaphore:
-                return await call(client, url, index, scenario.unique_inputs)
+def p95_latency(latencies: list[float]) -> float:
+    if not latencies:
+        return 0.0
+    if len(latencies) < 20:
+        return max(latencies)
+    return statistics.quantiles(latencies, n=20)[18]
 
-        started = time.perf_counter()
-        rows = await asyncio.gather(*(limited(index) for index in range(scenario.requests)))
-        total_ms = (time.perf_counter() - started) * 1000
 
-        gateway_metrics = (await client.get(url.replace("/predict", "/metrics"))).json()
-        worker_snapshot = (await client.get(url.replace("/predict", "/workers"))).json()
-
+def summarize_load(
+    scenario: Scenario,
+    rows: list[dict[str, Any]],
+    total_ms: float,
+    gateway_metrics: dict[str, Any],
+    worker_snapshot: list[dict[str, Any]],
+) -> dict[str, Any]:
     latencies = [row["latency_ms"] for row in rows if row["ok"]]
     failures = sum(1 for row in rows if not row["ok"])
     cache_hits = sum(1 for row in rows if row["ok"] and row["cached"])
-    p95 = statistics.quantiles(latencies, n=20)[18] if len(latencies) >= 20 else max(latencies, default=0)
 
     return {
         "requests": scenario.requests,
@@ -206,64 +262,44 @@ async def run_load(url: str, scenario: Scenario) -> dict[str, Any]:
         "total_ms": round(total_ms, 2),
         "requests_per_second": round(scenario.requests / (total_ms / 1000), 2),
         "p50_latency_ms": round(statistics.median(latencies), 2) if latencies else 0,
-        "p95_latency_ms": round(p95, 2),
+        "p95_latency_ms": round(p95_latency(latencies), 2),
         "gateway_metrics": gateway_metrics,
         "workers": worker_snapshot,
     }
 
 
+async def run_load(url: str, scenario: Scenario) -> dict[str, Any]:
+    semaphore = asyncio.Semaphore(scenario.concurrency)
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        async def limited(index: int) -> dict[str, Any]:
+            async with semaphore:
+                return await send_prediction(client, url, index, scenario.unique_inputs)
+
+        started = time.perf_counter()
+        rows = await asyncio.gather(*(limited(index) for index in range(scenario.requests)))
+        total_ms = (time.perf_counter() - started) * 1000
+
+        gateway_metrics = (await client.get(url.replace("/predict", "/metrics"))).json()
+        worker_snapshot = (await client.get(url.replace("/predict", "/workers"))).json()
+
+    return summarize_load(scenario, rows, total_ms, gateway_metrics, worker_snapshot)
+
+
 async def run_scenario(scenario: Scenario, log_dir: Path) -> dict[str, Any]:
     processes: list[subprocess.Popen] = []
-    gateway_port = BASE_PORT
-    worker_urls = []
+    worker_urls = [service_url(worker.port) for worker in scenario.workers]
 
     try:
         for worker in scenario.workers:
-            worker_urls.append(f"http://localhost:{worker.port}")
-            processes.append(start_process(
-                [
-                    sys.executable,
-                    "-m",
-                    "uvicorn",
-                    "worker.app.main:app",
-                    "--host",
-                    "127.0.0.1",
-                    "--port",
-                    str(worker.port),
-                ],
-                service_env({
-                    "WORKER_ID": worker.name,
-                    "SIMULATE_DELAY_MS": str(worker.delay_ms),
-                    "FAIL_RATE": str(worker.fail_rate),
-                }),
-                log_dir / f"{scenario.name}-{worker.name}.log",
-            ))
+            processes.append(start_worker(worker, scenario, log_dir))
 
         for url in worker_urls:
             await wait_for_health(f"{url}/health")
 
-        processes.append(start_process(
-            [
-                sys.executable,
-                "-m",
-                "uvicorn",
-                "gateway.app.main:app",
-                "--host",
-                "127.0.0.1",
-                "--port",
-                str(gateway_port),
-            ],
-            service_env({
-                "WORKER_URLS": ",".join(worker_urls),
-                "ROUTER_STRATEGY": scenario.router_strategy,
-                "CACHE_ENABLED": "true" if scenario.cache_enabled else "false",
-                "REQUEST_TIMEOUT_SECONDS": "1.0",
-            }),
-            log_dir / f"{scenario.name}-gateway.log",
-        ))
-        await wait_for_health(f"http://localhost:{gateway_port}/health")
+        processes.append(start_gateway(scenario, worker_urls, log_dir))
+        await wait_for_health(f"{service_url(BASE_PORT)}/health")
 
-        result = await run_load(f"http://localhost:{gateway_port}/predict", scenario)
+        result = await run_load(f"{service_url(BASE_PORT)}/predict", scenario)
         return {
             "name": scenario.name,
             "description": scenario.description,
