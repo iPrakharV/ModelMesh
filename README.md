@@ -9,7 +9,7 @@ The first version runs a FastAPI gateway in front of a few model workers. The ga
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements/base.txt
 
 uvicorn worker.app.main:app --port 8011
 WORKER_URLS=http://localhost:8011 uvicorn gateway.app.main:app --port 8000
@@ -45,7 +45,7 @@ python bench/replay_traffic.py --seconds-per-stage 8 --rps 18
 ## Docker
 
 ```bash
-docker compose up --build
+make compose
 ```
 
 That starts Redis, one gateway, and two workers.
@@ -54,7 +54,7 @@ For a production-style local run:
 
 ```bash
 cp .env.example .env
-docker compose -f docker-compose.prod.yml up --build
+make compose-prod
 python scripts/smoke_check.py
 ```
 
@@ -98,7 +98,7 @@ The worker can load a small trained text model artifact from `worker/app/artifac
 On Apple Silicon, the training script uses PyTorch MPS. It refuses to run on CPU by default so a slow accidental CPU run fails fast.
 
 ```bash
-pip install -r requirements-train.txt
+pip install -r requirements/train.txt
 python training/train_text_model.py
 ```
 

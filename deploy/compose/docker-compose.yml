@@ -6,7 +6,7 @@ services:
 
   worker-a:
     build:
-      context: .
+      context: ../..
       dockerfile: worker/Dockerfile
     environment:
       WORKER_ID: worker-a
@@ -15,7 +15,7 @@ services:
 
   worker-b:
     build:
-      context: .
+      context: ../..
       dockerfile: worker/Dockerfile
     environment:
       WORKER_ID: worker-b
@@ -25,7 +25,7 @@ services:
 
   gateway:
     build:
-      context: .
+      context: ../..
       dockerfile: gateway/Dockerfile
     environment:
       WORKER_URLS: http://worker-a:9000,http://worker-b:9000

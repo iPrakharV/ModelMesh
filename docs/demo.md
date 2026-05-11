@@ -5,7 +5,7 @@ This is the local demo flow I use to show the system moving.
 Terminal 1:
 
 ```bash
-docker compose up --build
+make compose
 ```
 
 Open:

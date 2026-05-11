@@ -6,7 +6,7 @@ ModelMesh is still easiest to demo locally because the failure controls and traf
 
 ```bash
 cp .env.example .env
-docker compose -f docker-compose.prod.yml up --build
+make compose-prod
 python scripts/smoke_check.py
 ```
 

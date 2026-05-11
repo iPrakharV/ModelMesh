@@ -13,10 +13,10 @@ replay:
 	python bench/replay_traffic.py --seconds-per-stage 8 --rps 18
 
 compose:
-	docker compose up --build
+	docker compose -f deploy/compose/docker-compose.yml up --build
 
 compose-prod:
-	docker compose -f docker-compose.prod.yml up --build
+	docker compose -f deploy/compose/docker-compose.prod.yml up --build
 
 smoke:
 	python scripts/smoke_check.py
