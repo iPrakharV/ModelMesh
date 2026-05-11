@@ -32,7 +32,7 @@ The benchmark runner uses both modes against the same slow-worker scenario so th
 
 ## Training
 
-`training/train_text_model.py` trains the tiny text model with PyTorch. On Apple Silicon it uses `mps`, and it exits instead of silently falling back to CPU unless `--allow-cpu` is passed.
+`training/train_text_model.py` trains the compact text model with PyTorch. On Apple Silicon it uses `mps`, and it exits instead of silently falling back to CPU unless `--allow-cpu` is passed.
 
 The trained artifact is plain JSON so the worker can load it without depending on PyTorch at inference time.
 

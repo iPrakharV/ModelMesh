@@ -2,9 +2,11 @@
 
 ## Model
 
-`tiny-text-mps-v1` is a small linear text classifier used by ModelMesh workers. It classifies short service-status text as either `healthy` or `risky`.
+`tiny-text-mps-v2` is a small MLP text classifier used by ModelMesh workers. It classifies short service-status text as either `healthy` or `risky`.
 
-The model is intentionally small. Its purpose is to make the training and serving path testable inside an inference mesh, not to compete with production NLP models.
+The model uses word-count features and character n-gram features. It trains with PyTorch, then exports to JSON so workers can run inference without PyTorch.
+
+The model is intentionally small. Its purpose is to make the training, export, evaluation, and serving path testable inside an inference mesh, not to compete with production NLP models.
 
 ## Training
 
@@ -18,14 +20,16 @@ Latest checked-in run:
 
 | Metric | Value |
 | --- | ---: |
+| Model type | mlp_text_classifier |
 | Device | mps |
-| Epochs | 320 |
+| Epochs | 260 |
 | Train examples | 3,276 |
 | Test examples | 820 |
-| Vocab size | 37 |
-| Parameters | 38 |
-| Train time | 0.4351 s |
-| Examples/sec | 2,409,512.37 |
+| Features | 140 |
+| Hidden units | 16 |
+| Parameters | 2,273 |
+| Train time | 0.3991 s |
+| Examples/sec | 2,134,408.08 |
 | Train accuracy | 1.0 |
 | Test accuracy | 1.0 |
 
@@ -44,23 +48,17 @@ The challenge set is a small handwritten set of service-status examples with mix
 | Metric | Value |
 | --- | ---: |
 | Examples | 16 |
-| Correct | 15 |
-| Accuracy | 0.9375 |
+| Correct | 16 |
+| Accuracy | 1.0 |
 
 Confusion matrix:
 
 | Expected | Predicted healthy | Predicted risky |
 | --- | ---: | ---: |
-| healthy | 6 | 1 |
+| healthy | 7 | 0 |
 | risky | 0 | 9 |
 
-The missed example was:
-
-```text
-worker recovered after timeout and is stable
-```
-
-The model predicted `risky`, mostly because `timeout` has a strong negative learned weight and the bag-of-words model does not understand recovery order.
+There were no misses on this challenge set. That is useful as a regression check, but it is still a small handwritten set and should not be treated as broad NLP evidence.
 
 Full evaluation output: `training/evaluation/latest.md`.
 
@@ -78,10 +76,10 @@ Use this model to exercise ModelMesh serving behavior:
 ## Limitations
 
 - Training data is generated service-status text, not a real production incident dataset.
-- The model is bag-of-words and does not understand word order.
+- The model uses word and character n-gram features, not a transformer or sequence model.
 - Accuracy numbers are useful for regression checks, not for claiming broad NLP performance.
 - The model is deliberately small so the project can focus on ML systems behavior.
 
 ## Next model improvement
 
-The next useful upgrade is a compact sequence model or character n-gram model trained on a larger labeled service-log dataset, still with MPS timing and artifact export.
+The next useful upgrade is a larger labeled service-log dataset or a compact sequence model, still with MPS timing, evaluation output, and JSON artifact export.

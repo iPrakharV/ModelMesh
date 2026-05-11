@@ -1,29 +1,28 @@
 # Model evaluation
 
-Model version: `tiny-text-mps-v1`
+Model version: `tiny-text-mps-v2`
+Model type: `mlp_text_classifier`
 
 | Metric | Value |
 | --- | ---: |
 | Examples | 16 |
-| Correct | 15 |
-| Accuracy | 0.9375 |
+| Correct | 16 |
+| Accuracy | 1.0 |
 
 ## Confusion matrix
 
 | Expected | Predicted healthy | Predicted risky |
 | --- | ---: | ---: |
-| healthy | 6 | 1 |
+| healthy | 7 | 0 |
 | risky | 0 | 9 |
 
 ## Label metrics
 
 | Label | Precision | Recall |
 | --- | ---: | ---: |
-| healthy | 1.0 | 0.8571 |
-| risky | 0.9 | 1.0 |
+| healthy | 1.0 | 1.0 |
+| risky | 1.0 | 1.0 |
 
 ## Misses
 
-| Text | Expected | Predicted | Score |
-| --- | --- | --- | ---: |
-| worker recovered after timeout and is stable | healthy | risky | 0.6689 |
+No misses on this challenge set.

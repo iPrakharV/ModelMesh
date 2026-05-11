@@ -33,8 +33,8 @@ flowchart LR
     gateway --> cache["Redis or memory cache"]
     gateway --> worker_a["Worker A"]
     gateway --> worker_b["Worker B"]
-    worker_a --> model_a["tiny-text-mps-v1"]
-    worker_b --> model_b["tiny-text-mps-v1"]
+    worker_a --> model_a["tiny-text-mps-v2"]
+    worker_b --> model_b["tiny-text-mps-v2"]
     gateway --> dashboard["Dashboard and metrics"]
 ```
 
@@ -49,13 +49,16 @@ Latest MPS training run on an M3 Pro:
 
 | Metric | Value |
 | --- | ---: |
+| Model type | mlp_text_classifier |
 | Device | mps |
-| Epochs | 320 |
+| Epochs | 260 |
 | Train examples | 3,276 |
 | Test examples | 820 |
-| Parameters | 38 |
-| Train time | 0.4351 s |
-| Examples/sec | 2,409,512.37 |
+| Features | 140 |
+| Hidden units | 16 |
+| Parameters | 2,273 |
+| Train time | 0.3991 s |
+| Examples/sec | 2,134,408.08 |
 | Train accuracy | 1.0 |
 | Test accuracy | 1.0 |
 
@@ -68,17 +71,17 @@ The model was also evaluated on a handwritten challenge set with mixed healthy a
 | Metric | Value |
 | --- | ---: |
 | Examples | 16 |
-| Correct | 15 |
-| Accuracy | 0.9375 |
+| Correct | 16 |
+| Accuracy | 1.0 |
 
 Confusion matrix:
 
 | Expected | Predicted healthy | Predicted risky |
 | --- | ---: | ---: |
-| healthy | 6 | 1 |
+| healthy | 7 | 0 |
 | risky | 0 | 9 |
 
-The one miss was a recovery sentence containing `timeout`. That is a reasonable failure for a bag-of-words model and is listed in `docs/model_card.md`.
+There were no misses on this challenge set. The set is small and handwritten, so the result is treated as a regression check rather than a broad NLP claim.
 
 ## Benchmark results
 
