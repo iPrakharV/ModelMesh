@@ -1,7 +1,15 @@
-.PHONY: test train bench replay compose compose-prod smoke docker-build
+.PHONY: lint compile test check train bench replay compose compose-prod smoke docker-build
+
+lint:
+	python -m ruff check .
+
+compile:
+	python -m compileall -q gateway worker training bench scripts tests
 
 test:
 	python -m pytest -q
+
+check: lint compile test
 
 train:
 	python training/train_text_model.py
