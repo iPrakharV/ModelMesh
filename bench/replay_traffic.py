@@ -9,7 +9,6 @@ from typing import Any
 
 import httpx
 
-
 ROOT = Path(__file__).resolve().parents[1]
 RESULT_PATH = ROOT / "bench" / "results" / "replay-latest.json"
 TEXTS = [
@@ -31,7 +30,14 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-async def control_worker(client: httpx.AsyncClient, base_url: str, index: int, *, delay_ms: int, fail_rate: float) -> bool:
+async def control_worker(
+    client: httpx.AsyncClient,
+    base_url: str,
+    index: int,
+    *,
+    delay_ms: int,
+    fail_rate: float,
+) -> bool:
     try:
         response = await client.post(
             f"{base_url}/workers/{index}/control",
@@ -63,7 +69,13 @@ async def snapshot(client: httpx.AsyncClient, base_url: str, stage: str) -> dict
     }
 
 
-async def send_stage(client: httpx.AsyncClient, base_url: str, stage: str, seconds: float, rps: float) -> dict[str, Any]:
+async def send_stage(
+    client: httpx.AsyncClient,
+    base_url: str,
+    stage: str,
+    seconds: float,
+    rps: float,
+) -> dict[str, Any]:
     deadline = time.perf_counter() + seconds
     interval = 1 / rps
     sent = 0
@@ -106,17 +118,25 @@ async def main() -> None:
 
     async with httpx.AsyncClient(timeout=5.0) as client:
         await reset_workers(client, base_url)
-        stages.append(await send_stage(client, base_url, "baseline", args.seconds_per_stage, args.rps))
+        stages.append(
+            await send_stage(client, base_url, "baseline", args.seconds_per_stage, args.rps)
+        )
 
         await control_worker(client, base_url, 1, delay_ms=350, fail_rate=0)
-        stages.append(await send_stage(client, base_url, "slow-worker", args.seconds_per_stage, args.rps))
+        stages.append(
+            await send_stage(client, base_url, "slow-worker", args.seconds_per_stage, args.rps)
+        )
 
         await reset_workers(client, base_url)
         await control_worker(client, base_url, 0, delay_ms=0, fail_rate=0.45)
-        stages.append(await send_stage(client, base_url, "flaky-worker", args.seconds_per_stage, args.rps))
+        stages.append(
+            await send_stage(client, base_url, "flaky-worker", args.seconds_per_stage, args.rps)
+        )
 
         await reset_workers(client, base_url)
-        stages.append(await send_stage(client, base_url, "recovery", args.seconds_per_stage, args.rps))
+        stages.append(
+            await send_stage(client, base_url, "recovery", args.seconds_per_stage, args.rps)
+        )
 
     payload = {
         "base_url": base_url,

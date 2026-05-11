@@ -20,7 +20,12 @@ def get_json(url: str, timeout: float = 2.0) -> dict:
 
 def post_json(url: str, payload: dict, timeout: float = 2.0) -> dict:
     data = json.dumps(payload).encode("utf-8")
-    req = request.Request(url, data=data, headers={"content-type": "application/json"}, method="POST")
+    req = request.Request(
+        url,
+        data=data,
+        headers={"content-type": "application/json"},
+        method="POST",
+    )
     with request.urlopen(req, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8"))
 
@@ -55,12 +60,17 @@ def main() -> None:
     if not workers:
         raise RuntimeError("gateway returned no workers")
 
-    print(json.dumps({
-        "health": health,
-        "prediction": prediction,
-        "metrics": metrics,
-        "workers": workers,
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "health": health,
+                "prediction": prediction,
+                "metrics": metrics,
+                "workers": workers,
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

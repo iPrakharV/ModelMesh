@@ -10,7 +10,6 @@ from pathlib import Path
 import torch
 from torch import nn
 
-
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_PATH = ROOT / "worker" / "app" / "artifacts" / "tiny_text_model.json"
 RUN_PATH = ROOT / "training" / "runs" / "latest.json"
@@ -103,10 +102,18 @@ def build_dataset(samples_per_class: int) -> tuple[list[str], torch.Tensor, torc
             row[index[token]] += 1.0
         rows.append(row)
 
-    return vocab, torch.tensor(rows, dtype=torch.float32), torch.tensor(labels, dtype=torch.float32).view(-1, 1)
+    return (
+        vocab,
+        torch.tensor(rows, dtype=torch.float32),
+        torch.tensor(labels, dtype=torch.float32).view(-1, 1),
+    )
 
 
-def split_dataset(x: torch.Tensor, y: torch.Tensor, train_fraction: float = 0.8) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+def split_dataset(
+    x: torch.Tensor,
+    y: torch.Tensor,
+    train_fraction: float = 0.8,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     train_count = int(len(x) * train_fraction)
     return x[:train_count], y[:train_count], x[train_count:], y[train_count:]
 
@@ -170,7 +177,12 @@ def train(
     return vocab, model.cpu(), stats
 
 
-def write_artifact(path: Path, vocab: list[str], model: nn.Linear, stats: dict[str, float | int | str]) -> None:
+def write_artifact(
+    path: Path,
+    vocab: list[str],
+    model: nn.Linear,
+    stats: dict[str, float | int | str],
+) -> None:
     weights = model.weight.detach().reshape(-1).tolist()
     artifact = {
         "model_version": "tiny-text-mps-v1",
@@ -182,7 +194,12 @@ def write_artifact(path: Path, vocab: list[str], model: nn.Linear, stats: dict[s
     path.write_text(json.dumps(artifact, indent=2) + "\n")
 
 
-def write_run_files(json_path: Path, md_path: Path, stats: dict[str, float | int | str], model_path: Path) -> None:
+def write_run_files(
+    json_path: Path,
+    md_path: Path,
+    stats: dict[str, float | int | str],
+    model_path: Path,
+) -> None:
     try:
         display_model_path = str(model_path.relative_to(ROOT))
     except ValueError:

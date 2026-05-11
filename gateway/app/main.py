@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import os
 import time
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator
+from typing import Any
 
 import httpx
 from fastapi import FastAPI, HTTPException
@@ -14,35 +14,11 @@ from .dashboard import DASHBOARD_HTML
 from .metrics import MetricsStore
 from .router import Worker, WorkerPool
 from .schemas import GatewayPrediction, PredictRequest, WorkerControlRequest
+from .settings import GatewaySettings
 
-DEFAULT_WORKER_URL = "http://localhost:8011"
 MAX_WORKER_ATTEMPTS = 2
 JsonObject = dict[str, Any]
 WorkerRow = dict[str, str | int | float | None]
-
-
-def env_flag(name: str, default: bool = True) -> bool:
-    value = os.getenv(name)
-    if value is None:
-        return default
-    return value.lower() not in {"0", "false", "no", "off"}
-
-
-def parse_worker_hostports(env: dict[str, str] | None = None) -> list[str]:
-    values = env or os.environ
-    urls = []
-    for key in sorted(values):
-        if key.startswith("WORKER_") and key.endswith("_HOSTPORT"):
-            hostport = values[key].strip()
-            if hostport:
-                urls.append(f"http://{hostport}")
-    return urls
-
-
-def parse_worker_urls(raw: str | None) -> list[str]:
-    if not raw:
-        return parse_worker_hostports() or [DEFAULT_WORKER_URL]
-    return [item.strip() for item in raw.split(",") if item.strip()]
 
 
 @asynccontextmanager
@@ -53,16 +29,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="ModelMesh Gateway", version="0.1.0", lifespan=lifespan)
+settings = GatewaySettings.from_env()
 router = WorkerPool(
-    parse_worker_urls(os.getenv("WORKER_URLS")),
-    strategy=os.getenv("ROUTER_STRATEGY", "load_aware"),
+    settings.worker_urls,
+    strategy=settings.router_strategy,
 )
 cache = PredictionCache(
-    os.getenv("REDIS_URL"),
-    enabled=env_flag("CACHE_ENABLED", default=True),
+    settings.redis_url,
+    enabled=settings.cache_enabled,
 )
 metrics = MetricsStore()
-request_timeout = float(os.getenv("REQUEST_TIMEOUT_SECONDS", "1.0"))
+request_timeout = settings.request_timeout_seconds
 
 
 def elapsed_ms(started: float) -> float:

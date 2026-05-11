@@ -1,5 +1,5 @@
 from gateway.app.cache import PredictionCache
-from gateway.app.main import parse_worker_hostports, parse_worker_urls
+from gateway.app.settings import parse_worker_hostports, parse_worker_urls
 
 
 def test_memory_cache_round_trip() -> None:

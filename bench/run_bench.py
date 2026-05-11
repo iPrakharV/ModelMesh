@@ -8,7 +8,6 @@ import time
 
 import httpx
 
-
 SAMPLES = [
     "fast stable model service",
     "worker timeout and broken response",
@@ -26,7 +25,13 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-async def call(client: httpx.AsyncClient, url: str, index: int, *, unique_requests: bool) -> tuple[float, bool, bool]:
+async def call(
+    client: httpx.AsyncClient,
+    url: str,
+    index: int,
+    *,
+    unique_requests: bool,
+) -> tuple[float, bool, bool]:
     started = time.perf_counter()
     text = SAMPLES[index % len(SAMPLES)]
     if unique_requests:
@@ -55,19 +60,32 @@ async def main() -> None:
     latencies = [latency for latency, ok, _ in results if ok]
     failures = sum(1 for _, ok, _ in results if not ok)
     cache_hits = sum(1 for _, ok, cached in results if ok and cached)
-    p95 = statistics.quantiles(latencies, n=20)[18] if len(latencies) >= 20 else max(latencies, default=0)
+    p95 = (
+        statistics.quantiles(latencies, n=20)[18]
+        if len(latencies) >= 20
+        else max(latencies, default=0)
+    )
 
-    print(json.dumps({
-        "requests": args.requests,
-        "successes": len(latencies),
-        "failures": failures,
-        "cache_hits": cache_hits,
-        "cache_hit_rate": round(cache_hits / len(latencies), 4) if latencies else 0,
-        "total_ms": round(total_ms, 2),
-        "requests_per_second": round(args.requests / (total_ms / 1000), 2),
-        "p50_latency_ms": round(statistics.median(latencies), 2) if latencies else 0,
-        "p95_latency_ms": round(p95, 2),
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "requests": args.requests,
+                "successes": len(latencies),
+                "failures": failures,
+                "cache_hits": cache_hits,
+                "cache_hit_rate": round(cache_hits / len(latencies), 4)
+                if latencies
+                else 0,
+                "total_ms": round(total_ms, 2),
+                "requests_per_second": round(args.requests / (total_ms / 1000), 2),
+                "p50_latency_ms": round(statistics.median(latencies), 2)
+                if latencies
+                else 0,
+                "p95_latency_ms": round(p95, 2),
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

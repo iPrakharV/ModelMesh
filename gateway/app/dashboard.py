@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 DASHBOARD_HTML = """
 <!doctype html>
 <html lang="en">

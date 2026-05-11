@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-import os
-import random
 import asyncio
+import random
 from dataclasses import dataclass
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from .model import load_model
+from .settings import WorkerSettings
 
 
 class PredictRequest(BaseModel):
@@ -36,11 +36,12 @@ class WorkerRuntime:
 
 
 app = FastAPI(title="ModelMesh Worker", version="0.1.0")
-model = load_model(os.getenv("MODEL_ARTIFACT"))
-worker_id = os.getenv("WORKER_ID", "worker-local")
+settings = WorkerSettings.from_env()
+model = load_model(settings.model_artifact)
+worker_id = settings.worker_id
 runtime = WorkerRuntime(
-    delay_ms=int(os.getenv("SIMULATE_DELAY_MS", "0")),
-    fail_rate=float(os.getenv("FAIL_RATE", "0")),
+    delay_ms=settings.delay_ms,
+    fail_rate=settings.fail_rate,
 )
 
 
