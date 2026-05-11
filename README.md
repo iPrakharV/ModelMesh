@@ -1,8 +1,26 @@
 # ModelMesh
 
+[![Tests](https://github.com/iPrakharV/ModelMesh/actions/workflows/test.yml/badge.svg)](https://github.com/iPrakharV/ModelMesh/actions/workflows/test.yml)
+
 A small inference gateway for testing how ML services behave when traffic, caching, and worker failures get involved.
 
 The first version runs a FastAPI gateway in front of a few model workers. The gateway accepts prediction requests, checks a cache, routes to a worker, retries on failure, and keeps basic latency and error metrics. Worker routing tracks recent latency, failures, and in-flight requests.
+
+![ModelMesh dashboard](docs/assets/dashboard.png)
+
+## Architecture
+
+```mermaid
+flowchart LR
+    client["Client or traffic replay"] --> gateway["FastAPI gateway"]
+    gateway --> cache["Redis cache or memory fallback"]
+    gateway --> router["Load-aware router"]
+    router --> workerA["Worker A"]
+    router --> workerB["Worker B"]
+    workerA --> model["Exported JSON model artifact"]
+    workerB --> model
+    gateway --> metrics["Metrics and dashboard"]
+```
 
 ## Run it
 
