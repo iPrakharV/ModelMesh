@@ -119,8 +119,9 @@ The repo includes:
 - local Docker Compose
 - production-style Docker Compose
 - Docker image builds in CI
+- Render Blueprint for a hosted demo
 
-A separate Render Blueprint PR prepares the hosted demo. It still needs a provider account action and cost review before there is a public URL.
+The hosted demo still needs a Render account action and cost review before there is a public URL. The Blueprint keeps workers private and disables public worker failure controls.
 
 ## Limitations
 
